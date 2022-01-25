@@ -5,12 +5,16 @@ import os
 import math
 
 import torch
+import torch.utils.data
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.optim.lr_scheduler import CosineAnnealingLR
 import torch.autograd as autograd
+
+from models import UNet
+from models.unet import FocalLoss, SegDataset
 
 args = None
 
@@ -120,7 +124,7 @@ def train(model, device, train_loader, optimizer, criterion, epoch):
         if batch_idx % args.log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss.item()))
+                       100. * batch_idx / len(train_loader), loss.item()))
 
 
 def test(model, device, criterion, test_loader):
@@ -150,7 +154,7 @@ def main():
                         help='input batch size for training (default: 64)')
     parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
                         help='input batch size for testing (default: 1000)')
-    parser.add_argument('--epochs', type=int, default=14, metavar='N',
+    parser.add_argument('--epochs', type=int, default=10, metavar='N',
                         help='number of epochs to train (default: 14)')
     parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
                         help='learning rate (default: 0.1)')
@@ -178,30 +182,28 @@ def main():
     device = torch.device("cuda" if use_cuda else "cpu")
 
     kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
-    train_loader = torch.utils.data.DataLoader(
-        datasets.MNIST(os.path.join(args.data, 'mnist'), train=True, download=True,
-                       transform=transforms.Compose([
-                           transforms.ToTensor(),
-                           transforms.Normalize((0.1307,), (0.3081,))
-                       ])),
-        batch_size=args.batch_size, shuffle=True, **kwargs)
-    test_loader = torch.utils.data.DataLoader(
-        datasets.MNIST(os.path.join(args.data, 'mnist'), train=False, transform=transforms.Compose([
-                           transforms.ToTensor(),
-                           transforms.Normalize((0.1307,), (0.3081,))
-                       ])),
-        batch_size=args.test_batch_size, shuffle=True, **kwargs)
 
-    model = Net().to(device)
+    ################dataset####################
+    color_shift = transforms.ColorJitter(.1, .1, .1, .1)
+    blurriness = transforms.GaussianBlur(3, sigma=(0.1, 2.0))
+    t = transforms.Compose([color_shift, blurriness])
+
+    dataset = SegDataset('sem_seg_dataset', training=True, transform=t)
+    test_num = int(0.1 * len(dataset))
+    print(f'test data : {test_num}')
+    train_dataset, test_dataset = torch.utils.data.random_split(dataset, [len(dataset) - test_num, test_num],
+                                                                generator=torch.Generator().manual_seed(101))
+
+    train_loader = torch.utils.data.DataLoader(
+        train_dataset, batch_size=args.test_batch_size, shuffle=True, num_workers=4)
+    test_loader = torch.utils.data.DataLoader(
+        test_dataset, batch_size=args.test_batch_size, shuffle=False, num_workers=1)
+
+    model = UNet(n_channels=3, n_classes=6, bilinear=True).to(device)
     # NOTE: only pass the parameters where p.requires_grad == True to the optimizer! Important!
-    optimizer = optim.SGD(
-        [p for p in model.parameters() if p.requires_grad],
-        lr=args.lr,
-        momentum=args.momentum,
-        weight_decay=args.wd,
-    )
-    criterion = nn.CrossEntropyLoss().to(device)
-    scheduler = CosineAnnealingLR(optimizer, T_max=args.epochs)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+    criterion = FocalLoss(gamma=3 / 4).to(device)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.5)
     for epoch in range(1, args.epochs + 1):
         train(model, device, train_loader, optimizer, criterion, epoch)
         test(model, device, criterion, test_loader)
