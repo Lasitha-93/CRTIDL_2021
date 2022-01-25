@@ -5,6 +5,7 @@ import os
 import math
 
 import torch
+import gc
 import torch.utils.data
 import torch.nn as nn
 import torch.nn.functional as F
@@ -147,6 +148,8 @@ def test(model, device, criterion, test_loader):
 
 
 def main():
+    gc.collect()
+    torch.cuda.empty_cache()
     global args
     # Training settings
     parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
@@ -184,18 +187,18 @@ def main():
     kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
 
     ################dataset####################
-    color_shift = transforms.ColorJitter(.1, .1, .1, .1)
-    blurriness = transforms.GaussianBlur(3, sigma=(0.1, 2.0))
-    t = transforms.Compose([color_shift, blurriness])
+    # color_shift = transforms.ColorJitter(.1, .1, .1, .1)
+    # blurriness = transforms.GaussianBlur(3, sigma=(0.1, 2.0))
+    # t = transforms.Compose([color_shift, blurriness])
 
-    dataset = SegDataset('sem_seg_dataset', training=True, transform=t)
+    dataset = SegDataset('sem_seg_dataset', training=True)
     test_num = int(0.1 * len(dataset))
     print(f'test data : {test_num}')
     train_dataset, test_dataset = torch.utils.data.random_split(dataset, [len(dataset) - test_num, test_num],
                                                                 generator=torch.Generator().manual_seed(101))
 
     train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=args.test_batch_size, shuffle=True, num_workers=4)
+        train_dataset, batch_size=args.test_batch_size, shuffle=True, num_workers=2)
     test_loader = torch.utils.data.DataLoader(
         test_dataset, batch_size=args.test_batch_size, shuffle=False, num_workers=1)
 
