@@ -53,6 +53,8 @@ def main_worker(args):
 
     # create model and optimizer
     model = get_model(args)
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print("Trainable Params: {}".format(trainable_params))
     model = set_gpu(args, model)
 
     if args.pretrained:
@@ -208,6 +210,7 @@ def main_worker(args):
         curr_acc5=acc5,
         base_config=args.config,
         name=args.name,
+        trainable_params=trainable_params,
     )
 
 
@@ -407,6 +410,7 @@ def write_result_to_csv(**kwargs):
             "Date Finished, "
             "Base Config, "
             "Name, "
+            "Total Trainable Parameters, "
             "Prune Rate, "
             "Current Val Top 1, "
             "Current Val Top 5, "
@@ -424,6 +428,7 @@ def write_result_to_csv(**kwargs):
                 "{now}, "
                 "{base_config}, "
                 "{name}, "
+                "{trainable_params}, "
                 "{prune_rate}, "
                 "{curr_acc1:.02f}, "
                 "{curr_acc5:.02f}, "
