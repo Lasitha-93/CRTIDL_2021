@@ -2,7 +2,7 @@
 arch: ResNet50
 
 # ===== Dataset ===== #
-data: /mnt/datasets
+data: /mnt
 set: ImageNet
 
 # ===== Learning Rate Policy ======== #
