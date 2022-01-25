@@ -200,6 +200,8 @@ def main_worker(args):
         writer.add_scalar("test/lr", cur_lr, epoch)
         end_epoch = time.time()
 
+    subnet_params_ = trainable_params * (1 - args.prune_rate)
+    k_ = (1 - args.prune_rate) * 100
     write_result_to_csv(
         best_acc1=best_acc1,
         best_acc5=best_acc5,
@@ -211,8 +213,8 @@ def main_worker(args):
         base_config=args.config,
         name=args.name,
         trainable_params=trainable_params,
-        subnet_params=trainable_params*(1-args.prune_rate),
-        k=(1-args.prune_rate)*100,
+        subnet_params=subnet_params_,
+        k=k_,
     )
 
 
@@ -434,7 +436,7 @@ def write_result_to_csv(**kwargs):
                 "{name}, "
                 "{trainable_params}, "
                 "{subnet_params}, "
-                "{k:.02f}, "
+                "{k}, "
                 "{prune_rate}, "
                 "{curr_acc1:.02f}, "
                 "{curr_acc5:.02f}, "
