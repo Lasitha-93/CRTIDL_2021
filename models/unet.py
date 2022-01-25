@@ -89,7 +89,7 @@ class UNet(nn.Module):
         self.bilinear = bilinear
 
         self.inc = DoubleConv(n_channels, 2)
-        self.down1 = Down(2, 44)
+        self.down1 = Down(2, 4)
         self.down2 = Down(4, 8)
         self.down3 = Down(8, 16)
         factor = 2 if bilinear else 1
