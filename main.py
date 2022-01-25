@@ -211,6 +211,8 @@ def main_worker(args):
         base_config=args.config,
         name=args.name,
         trainable_params=trainable_params,
+        subnet_params=trainable_params*(1-args.prune_rate),
+        k=(1-args.prune_rate)*100,
     )
 
 
@@ -431,8 +433,8 @@ def write_result_to_csv(**kwargs):
                 "{base_config}, "
                 "{name}, "
                 "{trainable_params}, "
-                "{trainable_params*(1-prune_rate)}, "
-                "{(1-prune_rate)}, "
+                "{subnet_params}, "
+                "{k:.02f}, "
                 "{prune_rate}, "
                 "{curr_acc1:.02f}, "
                 "{curr_acc5:.02f}, "
