@@ -198,7 +198,7 @@ def main():
                                                                 generator=torch.Generator().manual_seed(101))
 
     train_loader = torch.utils.data.DataLoader(
-        datasets.CIFAR10(os.path.join(args.data, 'cifar'), train=True, download=True,
+        datasets.CIFAR10(os.path.join(args.data, 'cifar10'), train=True, download=True,
                        transform=transforms.Compose([
                            transforms.ToTensor(),
                            transforms.Normalize((0.1307,), (0.3081,))
