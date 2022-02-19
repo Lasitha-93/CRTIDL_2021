@@ -198,13 +198,13 @@ def main():
                                                                 generator=torch.Generator().manual_seed(101))
 
     train_loader = torch.utils.data.DataLoader(
-        datasets.MNIST(os.path.join(args.data, 'mnist'), train=True, download=True,
+        datasets.CIFAR10(os.path.join(args.data, 'cifar'), train=True, download=True,
                        transform=transforms.Compose([
                            transforms.ToTensor(),
                            transforms.Normalize((0.1307,), (0.3081,))
                        ])),
         batch_size=args.batch_size, shuffle=True, **kwargs)
-    test_loader =  torch.utils.data.DataLoader(
+    test_loader = torch.utils.data.DataLoader(
         datasets.MNIST(os.path.join(args.data, 'mnist'), train=False, transform=transforms.Compose([
                            transforms.ToTensor(),
                            transforms.Normalize((0.1307,), (0.3081,))
