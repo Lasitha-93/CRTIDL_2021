@@ -198,16 +198,9 @@ def main():
                                                                 generator=torch.Generator().manual_seed(101))
 
     train_loader = torch.utils.data.DataLoader(
-        datasets.CIFAR10(os.path.join(args.data, 'cifar10'), train=True, download=True,
-                       transform=transforms.Compose([
-                           transforms.ToTensor()
-                       ])),
-        batch_size=args.batch_size, shuffle=True, **kwargs)
+        train_dataset, batch_size=args.test_batch_size, shuffle=True, num_workers=2)
     test_loader = torch.utils.data.DataLoader(
-        datasets.CIFAR10(os.path.join(args.data, 'cifar10'), train=False, transform=transforms.Compose([
-                           transforms.ToTensor()
-                       ])),
-        batch_size=args.test_batch_size, shuffle=True, **kwargs)
+        test_dataset, batch_size=args.test_batch_size, shuffle=False, num_workers=1)
 
     model = UNet(n_channels=3, n_classes=6, bilinear=True).to(device)
     # NOTE: only pass the parameters where p.requires_grad == True to the optimizer! Important!
