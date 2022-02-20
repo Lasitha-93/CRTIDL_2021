@@ -198,10 +198,15 @@ def main():
                                                                 generator=torch.Generator().manual_seed(101))
 
     train_loader = torch.utils.data.DataLoader(
-        datasets.CIFAR10(os.path.join(args.data, 'cifar10'), train=True, download=True),
+        datasets.CIFAR10(os.path.join(args.data, 'cifar10'), train=True, download=True,
+                       transform=transforms.Compose([
+                           transforms.ToTensor()
+                       ])),
         batch_size=args.batch_size, shuffle=True, **kwargs)
     test_loader = torch.utils.data.DataLoader(
-        datasets.CIFAR10(os.path.join(args.data, 'cifar10'), train=False),
+        datasets.CIFAR10(os.path.join(args.data, 'cifar10'), train=False, transform=transforms.Compose([
+                           transforms.ToTensor()
+                       ])),
         batch_size=args.test_batch_size, shuffle=True, **kwargs)
 
     model = UNet(n_channels=3, n_classes=6, bilinear=True).to(device)
